@@ -3,6 +3,9 @@ import os
 import logging
 from Bio import SeqIO
 from bioservices.kegg import KEGG
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
 kegg_api = KEGG()
 
 
@@ -114,3 +117,17 @@ def parse_brite_file(brite_file):
     return basic_tre
 
 # module_brite = parse_brite_file(brite_file)
+
+def ko2gename(ko_list):
+    ko2name={}
+    for ko_num in ko_list:
+        url = f"https://www.genome.jp/dbget-bin/www_btit?ko+-n+{ko_num}"
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, "html.parser")
+        a_tag = soup.find('a', href=f"/entry/ko:{ko_num}")
+        row_info = a_tag.parent.text.strip()
+        start_index = row_info.find(f"ko:{ko_num}") + len(f"ko:{ko_num}")
+        end_index = row_info.find("[")
+        gename = row_info[start_index:end_index].strip().split(";", 1)[0]
+        ko2name[ko_num]=gename
+    return ko2name
